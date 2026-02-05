@@ -4,7 +4,7 @@ conn = sqlite3.connect("database.db")
 cur = conn.cursor()
 
 cur.execute("""
-CREATE TABLE petitions (
+CREATE TABLE IF NOT EXISTS petitions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     mobile TEXT NOT NULL,
@@ -17,5 +17,4 @@ CREATE TABLE petitions (
 
 conn.commit()
 conn.close()
-
-print(" Database recreated successfully")
+print("Database created successfully")
