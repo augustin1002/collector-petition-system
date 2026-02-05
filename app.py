@@ -57,7 +57,7 @@ Problem:
 Status: Pending
 """)
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
             server.login(EMAIL_USER, EMAIL_PASS)
             server.send_message(msg)
 
@@ -103,9 +103,17 @@ def petition():
         pid = cur.lastrowid
         conn.commit()
         conn.close()
-        send_admin_email(pid, name, mobile, place, department, problem)
-        send_admin_sms(f"New Petition Received\nID:{pid}\nName:{name}")
-        return render_template("success.html", pid=pid)
+        try:
+            send_admin_email(pid, name, mobile, place, department, problem)
+        except:
+            pass
+
+        try:
+            send_admin_sms(f"New Petition Received\nID:{pid}\nName:{name}")
+        except:
+            pass
+
+    return render_template("success.html", pid=pid)
 
     return render_template("petition.html")
 
@@ -177,6 +185,7 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)  
+
 
 
 
