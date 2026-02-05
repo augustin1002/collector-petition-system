@@ -17,6 +17,22 @@ ADMIN_MOBILE  = os.getenv("ADMIN_MOBILE")
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 
+def get_db():
+    conn = sqlite3.connect("database.db")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS petitions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            mobile TEXT NOT NULL,
+            place TEXT NOT NULL,
+            department TEXT NOT NULL,
+            problem TEXT NOT NULL,
+            status TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    return conn
+
 # ================= EMAIL FUNCTION =================
 def send_admin_email(pid, name, mobile, place, department, problem):
     msg = EmailMessage()
@@ -62,8 +78,9 @@ def petition():
         department = request.form["department"]
         problem = request.form["problem"]
 
-        conn = sqlite3.connect("database.db")
+        conn = get_db()
         cur = conn.cursor()
+
         cur.execute("""
             INSERT INTO petitions (name, mobile, place, department, problem, status)
             VALUES (?, ?, ?, ?, ?, 'Pending')
@@ -72,11 +89,6 @@ def petition():
         pid = cur.lastrowid
         conn.commit()
         conn.close()
-
-        send_admin_email(pid, name, mobile, place, department, problem)
-        send_admin_sms(
-            f"New Petition\nID:{pid}\nName:{name}\nPlace:{place}\nDept:{department}"
-        )
 
         return render_template("success.html", pid=pid)
 
@@ -88,7 +100,7 @@ def track():
     petition = None
     if request.method == "POST":
         pid = request.form["pid"]
-        conn = sqlite3.connect("database.db")
+        conn = get_db()
         cur = conn.cursor()
         cur.execute("SELECT * FROM petitions WHERE id=?", (pid,))
         petition = cur.fetchone()
@@ -114,7 +126,7 @@ def admin_dashboard():
     if not session.get("admin"):
         return redirect(url_for("admin_login"))
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM petitions")
     data = cur.fetchall()
@@ -130,7 +142,7 @@ def update_status(pid, status):
 
     status = status.replace("_", " ")
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("UPDATE petitions SET status=? WHERE id=?", (status, pid))
     conn.commit()
@@ -150,5 +162,6 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
