@@ -103,19 +103,24 @@ def petition():
         pid = cur.lastrowid
         conn.commit()
         conn.close()
+
+        # Email (non-blocking)
         try:
             send_admin_email(pid, name, mobile, place, department, problem)
-        except:
-            pass
+        except Exception as e:
+            print("EMAIL FAILED:", e)
 
+        # SMS (non-blocking)
         try:
             send_admin_sms(f"New Petition Received\nID:{pid}\nName:{name}")
-        except:
-            pass
+        except Exception as e:
+            print("SMS FAILED:", e)
 
-    return render_template("success.html", pid=pid)
+        return render_template("success.html", pid=pid)
 
+    # GET request
     return render_template("petition.html")
+
 
 # ================= TRACK =================
 @app.route("/track", methods=["GET", "POST"])
@@ -185,6 +190,7 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)  
+
 
 
 
