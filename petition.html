@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Collector Office Petition</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ADMIN LOGIN BUTTON */
+        .admin-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .admin-btn a {
+            background: #2d3436;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .admin-btn a:hover {
+            background: #000;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        button {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #5a4bdc;
+        }
+
+        .track {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .track a {
+            text-decoration: none;
+            color: #6c5ce7;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ADMIN LOGIN BUTTON -->
+<div class="admin-btn">
+    <a href="/admin_login">Admin Login</a>
+</div>
+
+<!-- PETITION FORM -->
+<div class="box">
+    <h2>Collector Office Petition</h2>
+
+    <form method="post">
+        <input name="name" placeholder="Your Name" required>
+        <input name="mobile" placeholder="Mobile Number" required>
+        <input name="place" placeholder="Village / City / District" required>
+
+        <select name="department" required>
+            <option value="">Select Department</option>
+            <option>Revenue</option>
+            <option>Pension</option>
+            <option>Water</option>
+            <option>Electricity</option>
+        </select>
+
+        <textarea name="problem" placeholder="Describe your problem" required></textarea>
+
+        <button type="submit">Submit Petition</button>
+    </form>
+
+    <div class="track">
+        <a href="/track">Track Petition</a>
+    </div>
+</div>
+
+</body>
+</html>
