@@ -56,7 +56,7 @@ Problem:
 Status: Pending
 """)
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
             server.login(EMAIL_USER, EMAIL_PASS)
             server.send_message(msg)
 
@@ -176,6 +176,7 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
