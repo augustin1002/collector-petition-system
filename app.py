@@ -35,12 +35,13 @@ def get_db():
 
 # ================= EMAIL FUNCTION =================
 def send_admin_email(pid, name, mobile, place, department, problem):
-    msg = EmailMessage()
-    msg["Subject"] = f"New Petition Received | ID {pid}"
-    msg["From"] = EMAIL_USER
-    msg["To"] = EMAIL_USER   # admin email
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = f"New Petition Received | ID {pid}"
+        msg["From"] = EMAIL_USER
+        msg["To"] = EMAIL_USER
 
-    msg.set_content(f"""
+        msg.set_content(f"""
 COLLECTOR OFFICE - NEW PETITION
 
 Petition ID : {pid}
@@ -55,18 +56,30 @@ Problem:
 Status: Pending
 """)
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(EMAIL_USER, EMAIL_PASS)
-        server.send_message(msg)
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.send_message(msg)
+
+        print("EMAIL SENT SUCCESSFULLY")
+
+    except Exception as e:
+        print("EMAIL ERROR:", e)
+
 
 # ================= SMS FUNCTION =================
 def send_admin_sms(message):
-    client = Client(ACCOUNT_SID, AUTH_TOKEN)
-    client.messages.create(
-        body=message,
-        from_=TWILIO_NUMBER,
-        to=ADMIN_MOBILE
-    )
+    try:
+        client = Client(ACCOUNT_SID, AUTH_TOKEN)
+        client.messages.create(
+            body=message,
+            from_=TWILIO_NUMBER,
+            to=ADMIN_MOBILE
+        )
+        print("SMS SENT SUCCESSFULLY")
+
+    except Exception as e:
+        print("SMS ERROR:", e)
+
 
 # ================= PETITION FORM =================
 @app.route("/", methods=["GET", "POST"])
@@ -89,7 +102,8 @@ def petition():
         pid = cur.lastrowid
         conn.commit()
         conn.close()
-
+        send_admin_email(pid, name, mobile, place, department, problem)
+        send_admin_sms(f"New Petition Received\nID:{pid}\nName:{name}")
         return render_template("success.html", pid=pid)
 
     return render_template("petition.html")
@@ -162,6 +176,7 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
