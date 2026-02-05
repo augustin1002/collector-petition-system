@@ -9,8 +9,8 @@ app = Flask(__name__)
 app.secret_key = "secret123"
 
 # ========== ENV VARIABLES ==========
-ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-AUTH_TOKEN  = os.getenv("TWILIO_AUTH_TOKEN")
+ACCOUNT_SID = os.getenv("ACCOUNT_SID")
+AUTH_TOKEN  = os.getenv("AUTH_TOKEN")
 TWILIO_NUMBER = os.getenv("TWILIO_NUMBER")
 ADMIN_MOBILE  = os.getenv("ADMIN_MOBILE")
 
@@ -150,3 +150,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
