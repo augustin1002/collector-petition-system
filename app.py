@@ -1,47 +1,32 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import smtplib
-import os
 from email.message import EmailMessage
 from twilio.rest import Client
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
+app.secret_key = "secret123"
 
-# ========== ENV VARIABLES ==========
-ACCOUNT_SID = os.getenv("ACCOUNT_SID")
-AUTH_TOKEN  = os.getenv("AUTH_TOKEN")
-TWILIO_NUMBER = os.getenv("TWILIO_NUMBER")
-ADMIN_MOBILE  = os.getenv("ADMIN_MOBILE")
+# ================= TWILIO CONFIG (ADMIN ONLY) =================
+ACCOUNT_SID = "AC4a15ec5fa370a84b6bf351ee031e7531"
+AUTH_TOKEN = "b52e024aa0c2626a051ae3ba7dd2697d"
+TWILIO_NUMBER = "+17169954855"
+ADMIN_MOBILE = "+918870493566"   # VERIFIED ADMIN NUMBER ONLY
 
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
-
-def get_db():
-    conn = sqlite3.connect("database.db")
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS petitions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            mobile TEXT NOT NULL,
-            place TEXT NOT NULL,
-            department TEXT NOT NULL,
-            problem TEXT NOT NULL,
-            status TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    return conn
+client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
 # ================= EMAIL FUNCTION =================
 def send_admin_email(pid, name, mobile, place, department, problem):
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = f"New Petition Received | ID {pid}"
-        msg["From"] = EMAIL_USER
-        msg["To"] = EMAIL_USER
+    sender_email = "johnaugustinarul@gmail.com"
+    sender_password = "phnccavuayodiwbc"
+    admin_email = "augustinarulraja@gmail.com"
 
-        msg.set_content(f"""
+    msg = EmailMessage()
+    msg["Subject"] = f"New Petition Received | ID {pid}"
+    msg["From"] = sender_email
+    msg["To"] = admin_email
+
+    msg.set_content(f"""
 COLLECTOR OFFICE - NEW PETITION
 
 Petition ID : {pid}
@@ -56,30 +41,17 @@ Problem:
 Status: Pending
 """)
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
-            server.login(EMAIL_USER, EMAIL_PASS)
-            server.send_message(msg)
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
 
-        print("EMAIL SENT SUCCESSFULLY")
-
-    except Exception as e:
-        print("EMAIL ERROR:", e)
-
-
-# ================= SMS FUNCTION =================
+# ================= SMS FUNCTION (ADMIN ONLY) =================
 def send_admin_sms(message):
-    try:
-        client = Client(ACCOUNT_SID, AUTH_TOKEN)
-        client.messages.create(
-            body=message,
-            from_=TWILIO_NUMBER,
-            to=ADMIN_MOBILE
-        )
-        print("SMS SENT SUCCESSFULLY")
-
-    except Exception as e:
-        print("SMS ERROR:", e)
-
+    client.messages.create(
+        body=message,
+        from_=TWILIO_NUMBER,
+        to=ADMIN_MOBILE
+    )
 
 # ================= PETITION FORM =================
 @app.route("/", methods=["GET", "POST"])
@@ -91,9 +63,8 @@ def petition():
         department = request.form["department"]
         problem = request.form["problem"]
 
-        conn = get_db()
+        conn = sqlite3.connect("database.db")
         cur = conn.cursor()
-
         cur.execute("""
             INSERT INTO petitions (name, mobile, place, department, problem, status)
             VALUES (?, ?, ?, ?, ?, 'Pending')
@@ -102,19 +73,24 @@ def petition():
         pid = cur.lastrowid
         conn.commit()
         conn.close()
+
+        # Notify ADMIN ONLY
         send_admin_email(pid, name, mobile, place, department, problem)
-        send_admin_sms(f"New Petition Received\nID:{pid}\nName:{name}")
+        send_admin_sms(
+            f"New Petition Received\nID: {pid}\nName: {name}\nPlace: {place}\nDept: {department}"
+        )
+
         return render_template("success.html", pid=pid)
 
     return render_template("petition.html")
 
-# ================= TRACK =================
+# ================= TRACK PETITION =================
 @app.route("/track", methods=["GET", "POST"])
 def track():
     petition = None
     if request.method == "POST":
         pid = request.form["pid"]
-        conn = get_db()
+        conn = sqlite3.connect("database.db")
         cur = conn.cursor()
         cur.execute("SELECT * FROM petitions WHERE id=?", (pid,))
         petition = cur.fetchone()
@@ -140,7 +116,7 @@ def admin_dashboard():
     if not session.get("admin"):
         return redirect(url_for("admin_login"))
 
-    conn = get_db()
+    conn = sqlite3.connect("database.db")
     cur = conn.cursor()
     cur.execute("SELECT * FROM petitions")
     data = cur.fetchall()
@@ -156,14 +132,15 @@ def update_status(pid, status):
 
     status = status.replace("_", " ")
 
-    conn = get_db()
+    conn = sqlite3.connect("database.db")
     cur = conn.cursor()
     cur.execute("UPDATE petitions SET status=? WHERE id=?", (status, pid))
     conn.commit()
     conn.close()
 
+    # Notify ADMIN ONLY
     send_admin_sms(
-        f"Petition Update\nID:{pid}\nStatus:{status}"
+        f"Petition Update\nID: {pid}\nNew Status: {status}"
     )
 
     return redirect(url_for("admin_dashboard"))
@@ -176,8 +153,3 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
