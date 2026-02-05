@@ -6,7 +6,7 @@ from email.message import EmailMessage
 from twilio.rest import Client
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = os.getenv("SECRET_KEY")
 
 # ========== ENV VARIABLES ==========
 ACCOUNT_SID = os.getenv("ACCOUNT_SID")
@@ -150,4 +150,5 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
