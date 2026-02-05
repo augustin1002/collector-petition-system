@@ -1,30 +1,28 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import smtplib
+import os
 from email.message import EmailMessage
 from twilio.rest import Client
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# ================= TWILIO CONFIG (ADMIN ONLY) =================
-ACCOUNT_SID = "AC4a15ec5fa370a84b6bf351ee031e7531"
-AUTH_TOKEN = "b52e024aa0c2626a051ae3ba7dd2697d"
-TWILIO_NUMBER = "+17169954855"
-ADMIN_MOBILE = "+918870493566"   # VERIFIED ADMIN NUMBER ONLY
+# ========== ENV VARIABLES ==========
+ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+AUTH_TOKEN  = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_NUMBER = os.getenv("TWILIO_NUMBER")
+ADMIN_MOBILE  = os.getenv("ADMIN_MOBILE")
 
-client = Client(ACCOUNT_SID, AUTH_TOKEN)
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
 
 # ================= EMAIL FUNCTION =================
 def send_admin_email(pid, name, mobile, place, department, problem):
-    sender_email = "johnaugustinarul@gmail.com"
-    sender_password = "phnccavuayodiwbc"
-    admin_email = "augustinarulraja@gmail.com"
-
     msg = EmailMessage()
     msg["Subject"] = f"New Petition Received | ID {pid}"
-    msg["From"] = sender_email
-    msg["To"] = admin_email
+    msg["From"] = EMAIL_USER
+    msg["To"] = EMAIL_USER   # admin email
 
     msg.set_content(f"""
 COLLECTOR OFFICE - NEW PETITION
@@ -42,11 +40,12 @@ Status: Pending
 """)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender_email, sender_password)
+        server.login(EMAIL_USER, EMAIL_PASS)
         server.send_message(msg)
 
-# ================= SMS FUNCTION (ADMIN ONLY) =================
+# ================= SMS FUNCTION =================
 def send_admin_sms(message):
+    client = Client(ACCOUNT_SID, AUTH_TOKEN)
     client.messages.create(
         body=message,
         from_=TWILIO_NUMBER,
@@ -74,17 +73,16 @@ def petition():
         conn.commit()
         conn.close()
 
-        # Notify ADMIN ONLY
         send_admin_email(pid, name, mobile, place, department, problem)
         send_admin_sms(
-            f"New Petition Received\nID: {pid}\nName: {name}\nPlace: {place}\nDept: {department}"
+            f"New Petition\nID:{pid}\nName:{name}\nPlace:{place}\nDept:{department}"
         )
 
         return render_template("success.html", pid=pid)
 
     return render_template("petition.html")
 
-# ================= TRACK PETITION =================
+# ================= TRACK =================
 @app.route("/track", methods=["GET", "POST"])
 def track():
     petition = None
@@ -138,9 +136,8 @@ def update_status(pid, status):
     conn.commit()
     conn.close()
 
-    # Notify ADMIN ONLY
     send_admin_sms(
-        f"Petition Update\nID: {pid}\nNew Status: {status}"
+        f"Petition Update\nID:{pid}\nStatus:{status}"
     )
 
     return redirect(url_for("admin_dashboard"))
