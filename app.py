@@ -168,23 +168,29 @@ def admin_dashboard():
     conn = get_db()
     cur = conn.cursor()
 
-    petitions = cur.execute("SELECT * FROM petitions ORDER BY id DESC").fetchall()
+    try:
+        petitions = cur.execute("SELECT * FROM petitions ORDER BY id DESC").fetchall()
 
-    total = cur.execute("SELECT COUNT(*) FROM petitions").fetchone()[0]
-    pending = cur.execute("SELECT COUNT(*) FROM petitions WHERE status='Pending'").fetchone()[0]
-    progress = cur.execute("SELECT COUNT(*) FROM petitions WHERE status='In Progress'").fetchone()[0]
-    solved = cur.execute("SELECT COUNT(*) FROM petitions WHERE status='Solved'").fetchone()[0]
+        total = cur.execute("SELECT COUNT(*) FROM petitions").fetchone()[0] or 0
+        pending = cur.execute("SELECT COUNT(*) FROM petitions WHERE status='Pending'").fetchone()[0] or 0
+        progress = cur.execute("SELECT COUNT(*) FROM petitions WHERE status='In Progress'").fetchone()[0] or 0
+        solved = cur.execute("SELECT COUNT(*) FROM petitions WHERE status='Solved'").fetchone()[0] or 0
 
-    dept_data = cur.execute("""
-        SELECT department, COUNT(*)
-        FROM petitions
-        GROUP BY department
-    """).fetchall()
+        dept_data = cur.execute("""
+            SELECT department, COUNT(*) 
+            FROM petitions 
+            GROUP BY department
+        """).fetchall()
 
-    departments = [row[0] for row in dept_data]
-    dept_counts = [row[1] for row in dept_data]
+        departments = [row[0] for row in dept_data] if dept_data else []
+        dept_counts = [row[1] for row in dept_data] if dept_data else []
 
-    conn.close()
+    except Exception as e:
+        print("DASHBOARD ERROR:", e)
+        return "Dashboard Error – check terminal"
+
+    finally:
+        conn.close()
 
     return render_template("admin_dashboard.html",
                            petitions=petitions,
@@ -195,6 +201,7 @@ def admin_dashboard():
                            departments=departments,
                            dept_counts=dept_counts,
                            role=session["role"])
+
 
 
 # ================= UPDATE STATUS =================
@@ -251,3 +258,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
