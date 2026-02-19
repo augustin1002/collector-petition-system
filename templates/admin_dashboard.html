@@ -1,95 +1,231 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Dashboard</title>
+    <title>District Collector Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        body {
-            font-family: Arial;
-            background: #f4f6f8;
-            padding: 20px;
-        }
-        h2 {
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
-        th {
-            background: #3498db;
-            color: white;
-        }
-        a {
-            text-decoration: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            color: white;
-            font-size: 13px;
-        }
-        .progress {
-            background: #f39c12;
-        }
-        .solved {
-            background: #2ecc71;
-        }
-        .logout {
-            float: right;
-            background: #e74c3c;
-            padding: 8px 12px;
-        }
+        body { margin:0; font-family:Segoe UI; background:#f4f6f9; }
+        .sidebar{ width:230px;height:100vh;background:#0b3d91;position:fixed;color:white;padding-top:20px;}
+        .sidebar h3{text-align:center;margin-bottom:30px;}
+        .sidebar a{display:block;padding:12px 20px;color:white;text-decoration:none;}
+        .sidebar a:hover{background:#1565c0;}
+        .main{margin-left:230px;padding:20px;}
+
+        .header{background:white;padding:15px;display:flex;justify-content:space-between;
+        box-shadow:0 2px 6px rgba(0,0,0,0.1);border-radius:8px;}
+
+        .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:20px;}
+        .card{background:white;padding:20px;border-radius:8px;text-align:center;
+        box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+
+        .charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:25px;}
+        .chart-box{background:white;padding:20px;border-radius:8px;
+        box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+
+        table{width:100%;border-collapse:collapse;margin-top:25px;background:white;}
+        th,td{padding:12px;text-align:center;}
+        th{background:#0b3d91;color:white;}
+        tr:nth-child(even){background:#f2f2f2;}
     </style>
 </head>
+
 <body>
 
-<h2>Collector Office - Admin Dashboard</h2>
-<a href="/logout" class="logout">Logout</a>
+<div class="sidebar">
+    <h3>Tamil Nadu Govt</h3>
+    <a href="/admin_dashboard">Dashboard</a>
+    <a href="/export_csv">Export CSV</a>
+    <a href="/logout">Logout</a>
+</div>
 
-<table>
+<div class="main">
+
+<div class="header">
+    <h2>Petition Monitoring</h2>
+</div>
+
+<!-- FILTER -->
+<div style="margin-top:20px;background:white;padding:15px;border-radius:8px;">
+
+Status:
+<select id="statusFilter" onchange="filterTable()">
+<option value="all">All</option>
+<option value="pending">Pending</option>
+<option value="in progress">In Progress</option>
+<option value="solved">Solved</option>
+</select>
+
+Department:
+<select id="deptFilter" onchange="filterTable()">
+<option value="all">All</option>
+{% for d in departments %}
+<option value="{{ d|lower }}">{{ d }}</option>
+{% endfor %}
+</select>
+
+Month:
+<select id="monthFilter" onchange="filterTable()">
+<option value="all">All</option>
+<option value="01">Jan</option>
+<option value="02">Feb</option>
+<option value="03">Mar</option>
+<option value="04">Apr</option>
+<option value="05">May</option>
+<option value="06">Jun</option>
+<option value="07">Jul</option>
+<option value="08">Aug</option>
+<option value="09">Sep</option>
+<option value="10">Oct</option>
+<option value="11">Nov</option>
+<option value="12">Dec</option>
+</select>
+
+</div>
+
+<!-- CARDS -->
+<div class="cards">
+<div class="card"><h3>Total</h3><h1 id="totalCard">0</h1></div>
+<div class="card"><h3 style="color:red">Pending</h3><h1 id="pendingCard">0</h1></div>
+<div class="card"><h3 style="color:orange">In Progress</h3><h1 id="progressCard">0</h1></div>
+<div class="card"><h3 style="color:green">Solved</h3><h1 id="solvedCard">0</h1></div>
+</div>
+
+<!-- CHARTS -->
+<div class="charts">
+<div class="chart-box"><canvas id="statusChart"></canvas></div>
+<div class="chart-box"><canvas id="deptChart"></canvas></div>
+</div>
+
+<!-- TABLE -->
+<table id="petitionTable">
 <tr>
-    <th>ID</th>
-    <th>Name</th>
-    <th>Mobile</th>
-    <th>Place</th>
-    <th>Department</th>
-    <th>Problem</th>
-    <th>Status</th>
-    <th>Action</th>
+<th>ID</th><th>Name</th><th>Department</th><th>Date</th><th>Status</th>
 </tr>
 
 {% for p in petitions %}
-<tr>
-    <td>{{ p[0] }}</td>
-    <td>{{ p[1] }}</td>
-    <td>{{ p[2] }}</td>
-    <td>{{ p[3] }}</td>
-    <td>{{ p[4] }}</td>
-    <td>{{ p[5] }}</td>
-    
+<tr class="data-row"
+data-status="{{ p['status']|lower }}"
+data-dept="{{ p['department']|lower }}"
+data-month="{{ p['created_at'][5:7] }}">
 
-    <td>
-        {% if p[6] == "Solved" %}
-            <span style="color:#2ecc71;font-weight:bold;">Solved</span>
-        {% elif p[6] == "In Progress" %}
-            <span style="color:#f39c12;font-weight:bold;">In Progress</span>
-        {% else %}
-            <span style="color:#e74c3c;font-weight:bold;">Submitted</span>
-        {% endif %}
-    </td>
+<td>{{ p['id'] }}</td>
+<td>{{ p['name'] }}</td>
+<td>{{ p['department'] }}</td>
+<td>{{ p['created_at'][:10] }}</td>
 
-    <td>
-        <a class="progress" href="/update/{{ p[0] }}/In_Progress">In Progress</a>
-        <a class="solved" href="/update/{{ p[0] }}/Solved">Solved</a>
-    </td>
+<td>
+<select data-pid="{{ p['id'] }}" onchange="changeStatus(this)">
+<option value="Pending" {% if p['status']=='Pending' %}selected{% endif %}>Pending</option>
+<option value="In Progress" {% if p['status']=='In Progress' %}selected{% endif %}>In Progress</option>
+<option value="Solved" {% if p['status']=='Solved' %}selected{% endif %}>Solved</option>
+</select>
+</td>
+
 </tr>
 {% endfor %}
-
 </table>
+
+</div>
+
+<script>
+
+let statusChart;
+let deptChart;
+
+function filterTable(){
+
+let status = statusFilter.value;
+let dept = deptFilter.value;
+let month = monthFilter.value;
+
+let rows = document.querySelectorAll(".data-row");
+
+let total=0,pending=0,progress=0,solved=0;
+let deptCounts={};
+
+rows.forEach(row=>{
+
+let s=row.dataset.status;
+let d=row.dataset.dept;
+let m=row.dataset.month;
+
+let show = (status==="all"||s===status) &&
+           (dept==="all"||d===dept) &&
+           (month==="all"||m===month);
+
+row.style.display = show?"":"none";
+
+if(show){
+
+total++;
+
+if(s==="pending") pending++;
+if(s==="in progress") progress++;
+if(s==="solved") solved++;
+
+deptCounts[d]=(deptCounts[d]||0)+1;
+
+}
+
+});
+
+updateCards(total,pending,progress,solved);
+updateCharts(pending,progress,solved,deptCounts);
+
+}
+
+function updateCards(t,p,pr,s){
+document.getElementById("totalCard").innerText=t;
+document.getElementById("pendingCard").innerText=p;
+document.getElementById("progressCard").innerText=pr;
+document.getElementById("solvedCard").innerText=s;
+}
+
+function updateCharts(p,pr,s,deptCounts){
+
+statusChart.data.datasets[0].data=[p,pr,s];
+statusChart.update();
+
+deptChart.data.labels=Object.keys(deptCounts);
+deptChart.data.datasets[0].data=Object.values(deptCounts);
+deptChart.update();
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+const statusCtx = document.getElementById("statusChart").getContext("2d");
+const deptCtx = document.getElementById("deptChart").getContext("2d");
+
+statusChart=new Chart(statusCtx,{
+type:'pie',
+data:{
+labels:["Pending","In Progress","Solved"],
+datasets:[{
+data:[0,0,0],
+backgroundColor:["#e53935","#fb8c00","#43a047"]
+}]
+}
+});
+
+deptChart=new Chart(deptCtx,{
+type:'bar',
+data:{
+labels:[],
+datasets:[{
+label:"Complaints",
+data:[],
+backgroundColor:"#1e88e5"
+}]
+},
+options:{scales:{y:{beginAtZero:true}}}
+});
+
+filterTable();
+
+});
+
+</script>
 
 </body>
 </html>
