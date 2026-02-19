@@ -51,11 +51,6 @@
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #5563d6;
         }
 
         .result {
@@ -66,18 +61,12 @@
             text-align: left;
         }
 
-        .result p {
-            margin: 6px 0;
-            font-size: 15px;
-            color: #333;
-        }
-
         .status {
             font-weight: bold;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             display: inline-block;
-            margin-top: 8px;
+            margin-top: 10px;
         }
 
         .Pending {
@@ -104,32 +93,37 @@
 </head>
 
 <body>
-    <div class="container">
-        <h2>Track Your Petition</h2>
+<div class="container">
+    <h2>Track Your Petition</h2>
 
-        <form method="POST">
-            <input type="number" name="pid" placeholder="Enter Petition ID" required>
-            <button type="submit">Track Status</button>
-        </form>
+    <form method="POST">
+        <input type="number" name="pid" placeholder="Enter Petition ID" required>
+        <button type="submit">Track Status</button>
+    </form>
 
-        {% if petition %}
-            <div class="result">
-                <p><strong>ID:</strong> {{ petition[0] }}</p>
-                <p><strong>Name:</strong> {{ petition[1] }}</p>
-                <p><strong>Mobile:</strong> {{ petition[2] }}</p>
-                <p><strong>Department:</strong> {{ petition[3] }}</p>
-                <p><strong>Problem:</strong> {{ petition[4] }}</p>
+    {% if petition %}
+        <div class="result">
+            <p><strong>ID:</strong> {{ petition[0] }}</p>
+            <p><strong>Name:</strong> {{ petition[1] }}</p>
+            <p><strong>Mobile:</strong> {{ petition[2] }}</p>
+            <p><strong>Place:</strong> {{ petition[3] }}</p>
+            <p><strong>Department:</strong> {{ petition[4] }}</p>
+            <p><strong>Problem:</strong> {{ petition[5] }}</p>
 
-                <span class="status {{ petition[5]|replace(' ', '_') }}">
-                    {{ petition[5] }}
-                </span>
-            </div>
-        {% elif petition is not none %}
-            <div class="not-found">
-                ❌ Petition ID not found
-            </div>
-        {% endif %}
-    </div>
+            {% if petition[6] == "Pending" %}
+                <span class="status Submitted">🕒 Pending </span>
+            {% elif petition[6] == "In Progress" %}
+                <span class="status In_Progress">🔄 In Progress</span>
+            {% elif petition[6] == "Solved" %}
+                <span class="status Solved">✅ Solved</span>
+            {% endif %}
+        </div>
+
+    {% elif petition is not none %}
+        <div class="not-found">
+            ❌ Petition ID not found
+        </div>
+    {% endif %}
+</div>
 </body>
 </html>
-
